@@ -8,7 +8,7 @@
 - `scored_data` - папка с оцениваемыми тестами
 - `scored_data_output` - папка с ответами на оцениваемые тесты.
 
-Пример использования чекера: `./check scored_data/vrp_421_41_1 scored_data_output/sc_421_41_1.out`
+Пример использования чекера: `./check scored_data/flp_25_2 scored_data_output/flp_25_2.out`
 
 ## Решения
 

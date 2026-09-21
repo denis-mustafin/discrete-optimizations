@@ -8,7 +8,7 @@
 - `scored_data` - папка с оцениваемыми тестами
 - `scored_data_output` - папка с ответами на оцениваемые тесты.
 
-Пример использования чекера: `./check scored_data/_gc_50_3 scored_data_output/gc_50_3.out`
+Пример использования чекера: `./check scored_data/gc_50_3 scored_data_output/gc_50_3.out`
 
 ## Решения
 

@@ -1,19 +1,72 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+/// #define DEBUG
+
+mt19937 rnd(0);
+
 vector<vector<int>> sets, in;
 vector<int> cost;
 vector<double> utility;
 
+vector<int> item_perm;
+vector<int> id_item;
+
 const double INF = 1e18;
 
+struct State {
+    vector<bool> covered;
+    vector<int> taken;
+    vector<bool> set_used;
+    int score;
+    int ptr;
+
+    void add_set(int j) {
+        taken.push_back(j);
+        score += cost[j];
+        set_used[j] = true;
+        for (int x : sets[j]) {
+            covered[id_item[x]] = true;
+        }
+        while (ptr < covered.size() && covered[ptr]) ++ptr;
+    }
+};
+
+bool operator<(const State& a, const State& b) {
+    return false;
+}
+
+int best_value;
+vector<int> ans;
+int n;
+
+int pilot_complete(State s) {
+    for (int i = s.ptr; i < n; ++i) {
+        if (s.covered[i]) continue;
+        int id = 0;
+        while (id < in[item_perm[i]].size() && s.set_used[in[item_perm[i]][id]]) ++id;
+        if (id == in[item_perm[i]].size()) return (int)1e9;
+        int j = in[item_perm[i]][id];
+        s.add_set(j);
+    }
+    if (s.score < best_value) {
+        best_value = s.score;
+        ans = s.taken;
+    }
+    return s.score;
+}
+
 void solve_() {
-    int n, m;
+    int m;
     cin >> n >> m;
     in.resize(n);
     sets.resize(m);
     cost.resize(m);
     utility.resize(m);
+    item_perm.resize(n);
+    id_item.resize(n);
+    iota(item_perm.begin(), item_perm.end(), 0);
+    iota(id_item.begin(), id_item.end(), 0);
     for (int i = 0; i < m; ++i) {
         cin >> cost[i];
         /// was it really that difficult to include the size of the set?
@@ -65,9 +118,54 @@ void solve_() {
             }
         }
     }
-    cout << value << "\n";
-    cout << greedy_ans.size() << "\n";
-    for (int i : greedy_ans) {
+    best_value = value;
+    ans = greedy_ans;
+
+    for (int i = 0; i < n; ++i) {
+        sort(in[i].begin(), in[i].end(), [&](int x, int y) { return utility[x] < utility[y]; });
+    }
+
+
+    auto start_time = clock();
+
+#ifndef DEBUG
+
+    while (clock() - start_time < 50 * CLOCKS_PER_SEC) {
+        shuffle(item_perm.begin(), item_perm.end(), rnd);
+        for (int i = 0; i < n; ++i) {
+            id_item[item_perm[i]] = i;
+        }
+#endif
+
+        const int QUEUE_SIZE = 5;
+        set<pair<int, State>> beam_queue;
+        State start(vector<bool>(n, false), {}, vector<bool>(m, false), 0, 0);
+        beam_queue.insert({pilot_complete(start), start});
+        while (!beam_queue.empty()) {
+            auto elem = *beam_queue.begin();
+            beam_queue.erase(beam_queue.begin());
+            State s = elem.second;
+            if (s.ptr == n) continue;
+            for (int j : in[item_perm[s.ptr]]) {
+                if (s.set_used[j]) continue;
+                State s1 = s;
+                s1.add_set(j);
+                beam_queue.insert({pilot_complete(s1), s1});
+                s.set_used[j] = true;
+            }
+            while (beam_queue.size() > QUEUE_SIZE) {
+                auto it = beam_queue.end();
+                --it;
+                beam_queue.erase(it);
+            }
+        }
+#ifndef DEBUG
+    }
+#endif
+
+    cout << best_value << "\n";
+    cout << ans.size() << "\n";
+    for (int i : ans) {
         cout << i << " ";
     }
     cout << "\n";

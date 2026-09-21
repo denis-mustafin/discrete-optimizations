@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
     for (int i : ans) {
         if (i < 0 || i >= m) {
             cout << "Presentation Error: Incorrect set index\nScore = 0\n";
+            return 0;
         }
         for (int x : sets[i]) {
             if (x >= 0 && x < n) {
@@ -55,10 +56,12 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < n; ++i) {
         if (!covered[i]) {
             cout << "Wrong Answer: Element " << i << " not covered\nScore = 0\n";
+            return 0;
         }
     }
     if (real_cost != participant_cost) {
         cout << "Wrong Answer: Participant claims cost is " << participant_cost << " but it is " << real_cost << "\nScore = 0\n";
+        return 0;
     }
 
     cout << "OK\nScore = " << participant_cost << "\n";

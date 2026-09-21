@@ -12,12 +12,11 @@ int main(int argc, char* argv[]) {
     auto input = freopen(argv[1], "r", stdin);
     int n, v, c;
     cin >> n >> v >> c;
-    people.resize(n + 1);
+    people.resize(n);
     d.resize(n);
     for (int i = 0; i < n; ++i) {
         cin >> d[i] >> people[i][0] >> people[i][1];
     }
-    people[n] = {0, 0};
     fclose(input);
 
     auto output = freopen(argv[2], "r", stdin);
@@ -48,29 +47,28 @@ int main(int argc, char* argv[]) {
                 cout << "Presentation Error: not enough customers for a vehicle\nScore = 0\n";
                 return 0;
             }
-            --cur[j];
-            if (cur[j] < 0 || cur[j] >= n) {
+            if (cur[j] <= 0 || cur[j] >= n) {
                 cout << "Presentation Error: incorrect person index\nScore = 0\n";
                 return 0;
             }
             ++cnt[cur[j]];
             if (j == 0) {
-                real_cost += len(cur[j], n);
+                real_cost += len(cur[j], 0);
             } else {
                 real_cost += len(cur[j], cur[j - 1]);
             }
             sum += d[cur[j]];
         }
         if (sum > c) {
-            cout << "Wrong Answer: vehicle exceeds capacity\nScore = 0\n";
+            cout << "Wrong Answer: vehicle " << i << " exceeds capacity\nScore = 0\n";
             return 0;
         }
         if (sz > 0) {
-            real_cost += len(n, cur[sz - 1]);
+            real_cost += len(0, cur[sz - 1]);
         }
     }
 
-    for (int i = 0; i < n; ++i) {
+    for (int i = 1; i < n; ++i) {
         if (cnt[i] != 1) {
             cout << "Wrong Answer: some person is not in one set\nScore = 0\n";
             return 0;

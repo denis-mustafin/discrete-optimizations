@@ -141,7 +141,6 @@ void solve_() {
     double ans = INF;
 
     for (int start = 0; start < 2 * (n + v) / v; ++start) {
-        cerr << start << endl;
         vector<vector<int>> division(v);
         vector<int> sums(v);
         int id = start;
@@ -193,6 +192,7 @@ void solve_() {
             }
         }
     }
+
     cout << ans << "\n";
     for (int i = 0; i < v; ++i) {
         cout << out[i].size() << " ";

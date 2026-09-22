@@ -50,10 +50,11 @@ struct MinCost {
   vector<ld> dist;
   vector<ld> potential;
   vector<int> par;
+    vector<bool> used;
   int N;
   int s, t;
 
-  MinCost(int N, int s, int t): edges(), G(N), dist(N), potential(N), par(N), N(N), s(s), t(t) {}
+  MinCost(int N, int s, int t): edges(), G(N), dist(N), potential(N), par(N), N(N), s(s), t(t), used(N) {}
 
   void add_dir_edge(int from, int to, int cap, ld cost) {
     G[from].emplace_back(edges.size());
@@ -72,25 +73,30 @@ struct MinCost {
   bool step() {
     fill(dist.begin(), dist.end(), INF);
     fill(par.begin(), par.end(), -1);
-      set<pair<ld, int>> Q;
-      dist[s] = 0;
-      Q.emplace(dist[s], s);
-      while (!Q.empty()) {
-          int v = Q.begin()->second;
-          Q.erase(Q.begin());
-          for (int i : G[v]) {
-              if (edges[i].cap > edges[i].flow) {
-                  int u = edges[i].to;
-                  ld opt = dist[v] + edges[i].cost + potential[v] - potential[u];
-                  if (dist[u] > opt + EPS) {
-                      Q.erase(make_pair(dist[u], u));
-                      par[u] = i;
-                      dist[u] = opt;
-                      Q.emplace(dist[u], u);
-                  }
-              }
-          }
-      }
+      fill(used.begin(), used.end(), false);
+    dist[s] = 0;
+
+    for (int _ = 1; _ < N; ++_) {
+        int v = -1;
+        for (int u = 0; u < N; ++u) {
+            if (used[u] || dist[u] > INF / 2) continue;
+            if (v == -1 || dist[u] < dist[v]) {
+                v = u;
+            }
+        }
+        if (v == -1) break;
+        used[v] = true;
+        for (int i : G[v]) {
+            if (edges[i].cap > edges[i].flow) {
+                int u = edges[i].to;
+                ld opt = dist[v] + edges[i].cost + potential[v] - potential[u];
+                if (dist[u] > opt + EPS) {
+                    par[u] = i;
+                    dist[u] = opt;
+                }
+            }
+        }
+    }
 
 
     if (dist[t] == INF)
@@ -147,13 +153,32 @@ pair<ld, vector<vector<int>>> greedy_match(vector<int> people, const vector<int>
 
     sort(people.begin(), people.end(), [](int i, int j) { return d[i] > d[j]; });
 
+    vector<bool> is_done(m);
+
     for (int j = 0; j < m; ++j) {
         int jd = people[j];
         int id = -1;
         for (int i = 0; i < n; ++i) {
             if (cap[i] < d[jd]) continue;
-            if (id == -1 || fullness[jd][shops[id]] < fullness[jd][shops[i]] - EPS
-            || (abs(fullness[jd][shops[id]] - fullness[jd][shops[i]]) < EPS && (shop_pos[shops[i]] - person_pos[jd]).sqlen() < (shop_pos[shops[id]] - person_pos[jd]).sqlen())) {
+            if (1 - EPS < fullness[jd][shops[i]]) {
+                id = i;
+            }
+        }
+        if (id == -1) {
+            continue;
+        }
+        cap[id] -= d[jd];
+        res[id].push_back(jd);
+        is_done[j] = true;
+        ans += (shop_pos[shops[id]] - person_pos[jd]).len();
+    }
+    for (int j = 0; j < m; ++j) {
+        if (is_done[j]) continue;
+        int jd = people[j];
+        int id = -1;
+        for (int i = 0; i < n; ++i) {
+            if (cap[i] < d[jd]) continue;
+            if (id == -1 || fullness[jd][shops[id]] < fullness[jd][shops[i]]) {
                 id = i;
             }
         }
@@ -180,15 +205,7 @@ void solve_() {
     MinCost mc(n + m + 2, n + m, n + m + 1);
     for (int i = 0; i < m; ++i) {
         mc.add_dir_edge(mc.s, i, d[i], 0);
-        vector<int> shops(n);
-        iota(shops.begin(), shops.end(), 0);
-        sort(shops.begin(), shops.end(), [&](int j1, int j2) {
-            return (person_pos[i] - shop_pos[j1]).sqlen() < (person_pos[i] - shop_pos[j2]).sqlen();
-        });
-        fill(id_ed[i], id_ed[i] + n, -1);
-
-        for (int jd = 0; jd < min(n, 10); ++jd) {
-            int j = shops[jd];
+        for (int j = 0; j < n; ++j) {
             id_ed[i][j] = mc.edges.size();
             mc.add_dir_edge(i, j + m, d[i], (person_pos[i] - shop_pos[j]).len() / d[i]);
         }
@@ -207,28 +224,34 @@ void solve_() {
     for (int i = 0; i < n; ++i) {
         openness[i] = mc.edges[ids[i]].flow * 1.0 / mc.edges[ids[i]].cap;
     }
+    vector<int> priority(n);
     int cnt1 = 0, cntn0 = 0;
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
-            if (id_ed[i][j] == -1) {
-                fullness[i][j] = 0;
-                continue;
-            }
             fullness[i][j] = mc.edges[id_ed[i][j]].flow * 1.0 / mc.edges[id_ed[i][j]].cap;
             if (fullness[i][j] > EPS) {
                 ++cntn0;
+                ++priority[j];
                 if (fullness[i][j] > 1 - EPS) {
                     ++cnt1;
+                    priority[j] += 100;
                 }
             }
         }
     }
+    ld theory = relax.first;
+    for (int i = 0; i < n; ++i) {
+        if (priority[i] > 100) {
+            theory += mc.edges[ids[i]].cost * (mc.edges[ids[i]].cap - mc.edges[ids[i]].flow);
+        }
+    }
+    cerr << theory << endl;
     cerr << cnt1 << " / " << cntn0 << endl;
 
 
     vector<int> open_order(n);
     iota(open_order.begin(), open_order.end(), 0);
-    sort(open_order.begin(), open_order.end(), [&](int i, int j) { return openness[i] > openness[j]; });
+    sort(open_order.begin(), open_order.end(), [&](int i, int j) { return priority[i] > priority[j]; });
     vector<int> people(m);
     iota(people.begin(), people.end(), 0);
 

@@ -64,14 +64,7 @@ struct MinCost {
   }
 
     void calc_potential() {
-      fill(potential.begin(), potential.end(), INF);
-      potential[s] = 0;
-    for (int i = 0; i < N; ++i) {
-      for (auto e : edges) {
-        if (e.flow < e.cap)
-          potential[e.to] = min(potential[e.to], potential[e.from] + e.cost);
-      }
-    }
+      fill(potential.begin(), potential.end(), 0);
   }
 
   int flow;

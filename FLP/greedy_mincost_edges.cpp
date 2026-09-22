@@ -136,12 +136,15 @@ struct MinCost {
   }
 };
 
-const int MAXN = 1e4;
+const int MAXN = 3e3;
 Vector shop_pos[MAXN];
 int c[MAXN];
 ld cost[MAXN];
 int d[MAXN];
 Vector person_pos[MAXN];
+
+ld fullness[MAXN][MAXN];
+int id_ed[MAXN][MAXN];
 
 pair<ld, vector<vector<int>>> greedy_match(vector<int> people, const vector<int>& shops) {
     int n = shops.size(), m = people.size();
@@ -161,7 +164,7 @@ pair<ld, vector<vector<int>>> greedy_match(vector<int> people, const vector<int>
         int id = -1;
         for (int i = 0; i < n; ++i) {
             if (cap[i] < d[jd]) continue;
-            if (id == -1 || ((shop_pos[shops[i]] - person_pos[jd]).sqlen() < (shop_pos[shops[id]] - person_pos[jd]).sqlen())) {
+            if (id == -1 || fullness[jd][shops[id]] < fullness[jd][shops[i]]) {
                 id = i;
             }
         }
@@ -189,6 +192,7 @@ void solve_() {
     for (int i = 0; i < m; ++i) {
         mc.add_dir_edge(mc.s, i, d[i], 0);
         for (int j = 0; j < n; ++j) {
+            id_ed[i][j] = mc.edges.size();
             mc.add_dir_edge(i, j + m, (int)1e9, (person_pos[i] - shop_pos[j]).len() / d[i]);
         }
     }
@@ -205,6 +209,11 @@ void solve_() {
     vector<ld> openness(n);
     for (int i = 0; i < n; ++i) {
         openness[i] = mc.edges[ids[i]].flow * 1.0 / mc.edges[ids[i]].cap;
+    }
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            fullness[i][j] = mc.edges[id_ed[i][j]].flow * 1.0 / mc.edges[id_ed[i][j]].cap;
+        }
     }
 
 

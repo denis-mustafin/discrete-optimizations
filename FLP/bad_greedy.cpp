@@ -49,7 +49,7 @@ pair<ld, vector<vector<int>>> greedy_match(vector<int> people, const vector<int>
         int id = -1;
         for (int i = 0; i < n; ++i) {
             if (cap[i] < d[jd]) continue;
-            if (id == -1 || ((shop_pos[shops[i]] - person_pos[jd]).sqlen() < (shop_pos[shops[id]] - person_pos[people[jd]]).sqlen())) {
+            if (id == -1 || ((shop_pos[shops[i]] - person_pos[jd]).sqlen() < (shop_pos[shops[id]] - person_pos[jd]).sqlen())) {
                 id = i;
             }
         }
